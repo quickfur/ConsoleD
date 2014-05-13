@@ -28,20 +28,42 @@ version(Posix) {
 	version(with_eventloop)
 		struct SignalFired {}
 
-	extern(C)
-	void sizeSignalHandler(int sigNumber) {
-		windowSizeChanged = true;
-		version(with_eventloop) {
-			import arsd.eventloop;
-			send(SignalFired());
+	static if (__VERSION__ >= 2066UL)
+	{
+		extern(C)
+		void sizeSignalHandler(int sigNumber) nothrow {
+			windowSizeChanged = true;
+			version(with_eventloop) {
+				import arsd.eventloop;
+				try { send(SignalFired()); } catch {}
+			}
+		}
+		extern(C)
+		void interruptSignalHandler(int sigNumber) nothrow {
+			interrupted = true;
+			version(with_eventloop) {
+				import arsd.eventloop;
+				try { send(SignalFired()); } catch {}
+			}
 		}
 	}
-	extern(C)
-	void interruptSignalHandler(int sigNumber) {
-		interrupted = true;
-		version(with_eventloop) {
-			import arsd.eventloop;
-			send(SignalFired());
+	else
+	{
+		extern(C)
+		void sizeSignalHandler(int sigNumber) {
+			windowSizeChanged = true;
+			version(with_eventloop) {
+				import arsd.eventloop;
+				send(SignalFired());
+			}
+		}
+		extern(C)
+		void interruptSignalHandler(int sigNumber) {
+			interrupted = true;
+			version(with_eventloop) {
+				import arsd.eventloop;
+				send(SignalFired());
+			}
 		}
 	}
 }
